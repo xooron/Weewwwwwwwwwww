@@ -1,236 +1,396 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <title>LORD SPIN - Рулетка</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg: #0b0b0c;
-      --bg2: #141516;
-      --glass: rgba(255,255,255,0.08);
-      --text: #e6e6e6;
-      --muted: #b5b5b5;
-      --accent: #4cc9f0;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crazy Gift Mini App</title>
+    <meta name="color-scheme" content="dark" />
+    <script>{const root=document.documentElement;root.setAttribute("data-theme","dark");root.classList.toggle("dark",true);root.style.colorScheme="dark"}</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap" />
+    <style>
+      :root {
+        --color-stage: #14052b;
+        --color-glass: rgba(255, 255, 255, 0.08);
+        --color-primary: #f5b942;
+        --color-foreground: #ffffff;
+        --font-sans: "Rubik", sans-serif;
+        --font-display: "Montserrat", sans-serif;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; border: 0 solid; }
+      body {
+        background-color: var(--color-stage);
+        color: var(--color-foreground);
+        font-family: var(--font-sans);
+        height: 100vh;
+        overflow: hidden;
+        user-select: none;
+      }
+      #root { height: 100dvh; display: flex; flex-direction: column; }
+      
+      .glass {
+        background: linear-gradient(160deg, rgba(251, 236, 255, 0.12), rgba(251, 236, 255, 0.04));
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+      }
+      
+      .gold-text {
+        background: linear-gradient(180deg, #fff3a1 0%, #f7b828 50%, #bb731b 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      
+      /* Navigation styles */
+      .nav-bar {
+        display: flex;
+        justify-content: space-around;
+        padding: 12px;
+        background: rgba(15, 3, 30, 0.85);
+        backdrop-filter: blur(15px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .nav-btn {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        font-family: var(--font-sans);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+      }
+      .nav-btn.active {
+        color: #f7b828;
+      }
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; padding: 0; background: radial-gradient(circle at 20% -10%, rgba(255,255,255,0.05), transparent 40%), radial-gradient(circle at 80% 0%, rgba(0,0,0,0.25), transparent 40%), linear-gradient(#0b0b0c, #0b0b0c); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+      /* Wheel CSS */
+      .wheel-container {
+        position: relative;
+        width: 280px;
+        height: 280px;
+        margin: 20px auto;
+      }
+      .wheel {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 6px solid #4a1d75;
+        box-shadow: 0 0 20px rgba(187, 115, 27, 0.4);
+        transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 1);
+        background: conic-gradient(
+          #6217ac 0deg 36deg, #e5a422 36deg 72deg,
+          #b822e5 72deg 108deg, #229ee5 108deg 144deg,
+          #e5225c 144deg 180deg, #22e562 180deg 216deg,
+          #6217ac 216deg 252deg, #e5a422 252deg 288deg,
+          #b822e5 288deg 324deg, #e5225c 324deg 360deg
+        );
+      }
+      .pointer {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 12px solid transparent;
+        border-right: 12px solid transparent;
+        border-top: 24px solid #f7b828;
+        z-index: 10;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
 
-    /* Верхняя стеклянная панель */
-    header.topbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 28px;
-      margin: 16px auto;
-      width: min(1100px, 92%);
-      border-radius: 14px;
-      background: var(--glass);
-      backdrop-filter: blur(6px);
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: 0 6px 20px rgba(0,0,0,.25);
-    }
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    .logo {
-      font-weight: 800;
-      letter-spacing: .5px;
-      font-size: 22px;
-      color: #fff;
-      text-shadow: 0 1px 0 rgba(0,0,0,.3);
-    }
+    <script type="text/babel">
+      const { useState } = React;
 
-    .right-area {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+      // Экран Профиля
+      function ProfileScreen({ balance, setBalance }) {
+        const [promoCode, setPromoCode] = useState('');
+        const [promoStatus, setPromoStatus] = useState('');
 
-    .balance {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12```css
-padding: 8px 12px;
-border-radius: 8px;
-background: rgba(255,255,255,.12);
-color: #fff;
-font-size: 12px;
-box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
-}
-.avatar { width: 42px; height: 42px; border-radius: 50%; overflow:hidden; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,.6); }
-.avatar img { width:100%; height:100%; object-fit: cover; }
+        const handleActivatePromo = () => {
+          if (!promoCode.trim()) return;
+          if (promoCode.toUpperCase() === 'CRAZY') {
+            setBalance(prev => prev + 500);
+            setPromoStatus('Промокод активирован! +500 G');
+          } else {
+            setPromoStatus('Неверный промокод');
+          }
+          setPromoCode('');
+        };
 
-.modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.6); z-index: 20; }
-.modal.active { display: flex; }
-.modal-content { width: min(520px, 92%); background: rgba(15,15,20,.98); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,.15); color: #fff; }
-.modal-header { display:flex; justify-content:flex-end; }
-.close { background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer; }
+        return (
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', flex: 1 }}>
+            
+            {/* Верхний блок Профиля */}
+            <div className="glass" style={{ padding: '16px', position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                
+                {/* Левая часть: Аватарка и @username под ней */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px solid #fff',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    fontSize: '28px'
+                  }}>
+                    👤
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#e9d5ff' }}>@username</span>
+                </div>
 
-.profile { display:flex; flex-direction:column; align-items:center; gap:12px; padding: 8px;<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <title>LORD SPIN - Рулетка</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg: #0b0b0c;
-      --bg2: #141516;
-      --glass: rgba(255,255,255,0.08);
-      --text: #eaeefc;
-      --muted: #b5b5b5;
-      --accent: #4cc9f0;
-      --green: #4cd97a;
-      --red: #ff5c6a;
-    }
+                {/* Правая часть: Вертикальные кнопки Пополнить и Вывести */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '120px' }}>
+                  <button 
+                    onClick={() => setBalance(prev => prev + 1000)}
+                    style={{
+                      background: 'linear-gradient(90deg, #22c55e, #16a34a)',
+                      color: '#fff',
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 10px rgba(34, 197, 94, 0.3)',
+                      fontSize: '13px'
+                    }}>
+                    Пополнить
+                  </button>
+                  <button 
+                    onClick={() => alert('Заявка на вывод создана')}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      color: '#fca5a5',
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      fontSize: '13px'
+                    }}>
+                    Вывести
+                  </button>
+                </div>
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; padding: 0;
-      background: radial-gradient(circle at 20% -10%, rgba(255,255,255,.05), transparent 40%),
-                  radial-gradient(circle at 80% 0%, rgba(0,0,0,.25), transparent 40%),
-                  linear-gradient(#0b0b0c, #0b0b0c);
-      color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
+              </div>
 
-    /* Верхняя стеклянная панель */
-    header.topbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-      width: min(1100px, 92%);
-      margin: 16px auto;
-      border-radius: 14px;
-      background: var(--glass);
-      backdrop-filter: blur(6px);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: 0 6px 20px rgba(0,0,0,.25);
-    }
+              {/* Баланс */}
+              <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>Текущий баланс:</span>
+                <span className="gold-text" style={{ fontSize: '20px', fontWeight: '800' }}>{balance} G</span>
+              </div>
+            </div>
 
-    .logo {
-      display: flex; align-items: center; gap: 12px;
-      font-weight: 800; font-size: 20px;
-      color: #fff;
-      letter-spacing: .5px;
-    }
-    .logo .dot { width: 10px; height: 10px; border-radius: 50%; background: #4cc9f0; display:inline-block; }
+            {/* Панель Промокод */}
+            <div className="glass" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontWeight: '500' }}>Промокод</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Введите промокод..." 
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(0,0,0,0.3)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: '12px',
+                    padding: '10px 14px',
+                    color: '#fff',
+                    outline: 'none',
+                    fontSize: '14px'
+                  }}
+                />
+                <button 
+                  onClick={handleActivatePromo}
+                  style={{
+                    background: 'linear-gradient(90deg, #e5a422, #f7b828)',
+                    color: '#000',
+                    fontWeight: '700',
+                    padding: '10px 16px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}>
+                  Активировать
+                </button>
+              </div>
+              {promoStatus && (
+                <span style={{ fontSize: '12px', color: promoStatus.includes('Активирован') ? '#4ade80' : '#f87171' }}>
+                  {promoStatus}
+                </span>
+              )}
+            </div>
 
-    .right-area { display: flex; align-items: center; gap: 12px; }
+            {/* Панели Депозиты и Выводы */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              
+              {/* Панель Депозиты */}
+              <div className="glass" style={{ padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'rgba(34, 197, 94, 0.2)',
+                  color: '#4ade80',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  fontWeight: '900'
+                }}>
+                  ↑
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>Депозиты</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>1,500 G</div>
+                </div>
+              </div>
 
-    .balance {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 8px 12px; border-radius: 999px;
-      background: rgba(255,255,255,.12);
-      color: #fff; font-size: 12px;
-      border: 1px solid rgba(255,255,255,.18);
-      white-space: nowrap;
-      transition: transform .3s;
-    }
-    .balance:hover { transform: translateY(-1px); }
-    .balance .coin {
-      width: 16px; height: 16px; border-radius: 50%; display:inline-flex; align-items: center; justify-content: center;
-      background: #ffd166; color: #1f1f1f; font-size: 11px; font-weight: 700;
-    }
+              {/* Панель Выводы */}
+              <div className="glass" style={{ padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  color: '#f87171',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  fontWeight: '900'
+                }}>
+                  ↓
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>Выводы</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>0 G</div>
+                </div>
+              </div>
 
-    .avatar {
-      width: 42px; height: 42px; border-radius: 50%; overflow: hidden;
-      border: 2px solid rgba(255,255,255,.7);
-      cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #6a8cff 0%, #b36aff 100%);
-    }
-    .avatar img { width:100%; height:100%; object-fit: cover; }
+            </div>
 
-    main { min-height: calc(100vh - 120px); padding: 20px; display: grid; place-items: center; }
+          </div>
+        );
+      }
 
-    /* Контейнер рулетки и панели */
-    .layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 40px;
-      width: min(1100px, 92%);
-      align-items: center;
-    }
+      // Главный экран (Колесо)
+      function WheelScreen({ balance, setBalance }) {
+        const [rotation, setRotation] = useState(0);
+        const [isSpinning, setIsSpinning] = useState(false);
 
-    /* Рулетка */
-    .wheel-stage {
-      display: grid; place-items: center;
-    }
+        const spinWheel = () => {
+          if (isSpinning || balance < 100) return;
+          setBalance(prev => prev - 100);
+          setIsSpinning(true);
 
-    .wheel {
-      width: 420px; height: 420px; border-radius: 50%;
-      background: conic-gradient(#f55 0 36deg, #f8a 36deg 72deg, #5df 72deg 108deg, #6f8 108deg 144deg, #f5c 144deg 180deg,
-                                 #9cf 180deg 216deg, #f99 216deg 252deg, #9f9 252deg 288deg, #6ff 288deg 324deg, #ff6 324deg 360deg);
-      position: relative;
-      box-shadow: inset 0 0 0 8px rgba(0,0,0,.15), 0 12px 30px rgba(0,0,0,.4);
-      transition: transform 0.6s cubic-bezier(.2,.8,.2,1);
-    }
-    /* Центр круга */
-    .wheel:after {
-      content: "";
-      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      width: 180px; height: 180px; border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(255,255,255,.0) 40%),
-                  radial-gradient(circle at 70% 70%, rgba(0,0,0,.25), rgba(0,0,0,0) 40%);
-      border: 6px solid rgba(255,255,255,.8);
-      box-shadow: inset 0 0 24px rgba(0,0,0,.25);
-      z-index: 2;
-    }
+          const randomDeg = Math.floor(Math.random() * 360) + 1440; // 4 полного оборота
+          const newRotation = rotation + randomDeg;
+          setRotation(newRotation);
 
-    /* Метки вокруг круга (названия призов) */
-    .pin {
-      position: absolute;
-      left: 50%; top: 50%;
-      width: max-content;
-      text-align: center;
-      color: #fff;
-      font-size: 12px;
-      transform-origin: center;
-      mix-blend-mode: screen;
-      padding: 4px 6px;
-      white-space: nowrap;
-      pointer-events: none;
-    }
-    /* Расположение 10 надписей по кругу (центр каждого надписи повернуть обратно к читаемому виду) */
-    /* i от 0 до 9 задаёт угол в 36deg */
-    /* Прямые стили будут вставлены через inline style="--i:0" и мы используем их в CSS ниже */
-    .pin[data-i] {
-      transform: rotate(calc(var(--i) * 36deg)) translate(-50%, -210px) rotate(calc(-1 * var(--i) * 36deg));
-    }
+          setTimeout(() => {
+            setIsSpinning(false);
+            setBalance(prev => prev + 250); // Выигрыш
+          }, 4000);
+        };
 
-    .pointer {
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 0; height: 0;
-      border-left: 14px solid transparent;
-      border-right: 14px solid transparent;
-      border-bottom: 22px solid #fff;
-      transform: translate(-50%, -100%);
-      z-index: 5;
-    }
+        return (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <h1 className="gold-text" style={{ fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: '900', marginBottom: '10px' }}>
+              LORD SPIN
+            </h1>
 
-    .spin-area { margin-top: 14px; display: flex; justify-content: center; }
+            <div className="wheel-container">
+              <div className="pointer"></div>
+              <div className="wheel" style={{ transform: `rotate(${rotation}deg)` }}></div>
+            </div>
 
-    .btn {
-      padding: 12px 22px; font-size: 16px; font-weight: 700;
-      border-radius: 999px; border: none; cursor: pointer;
-      color: #0b0b0c; background: #ffd166;
-      box-shadow: 0 6px 14px rgba(0,0,0,.25);
-      transition: transform .2s;
-    }
-    .btn:hover { transform: translateY(-1px); }
-    .btn:active { transform: translateY(0); }
+            <button 
+              onClick={spinWheel}
+              disabled={isSpinning || balance < 100}
+              style={{
+                marginTop: '20px',
+                width: '80%',
+                maxWidth: '280px',
+                padding: '14px',
+                borderRadius: '16px',
+                background: isSpinning ? '#555' : 'linear-gradient(180deg, #fff3a1, #f7b828)',
+                border: 'none',
+                color: '#000',
+                fontWeight: '800',
+                fontSize: '16px',
+                cursor: isSpinning ? 'not-allowed' : 'pointer',
+                boxShadow: '0 6px 20px rgba(247, 184, 40, 0.4)'
+              }}>
+              {isSpinning ? 'ВРАЩЕНИЕ...' : 'КРУТИТЬ (100 G)'}
+            </button>
+          </div>
+        );
+      }
 
-    /* Правая панелька: профиль/инвентарь */
-    .panel {
-      background: rgba(20,20,22,.75);
-      border: 1px solid rgba(255,255,255,.15);
-      border-radius: 
+      // Инвентарь
+      function InventoryScreen() {
+        return (
+          <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '12px' }}>Мои Призы</h2>
+            <div className="glass" style={{ padding: '20px', textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
+              Ваш инвентарь пока пуст
+            </div>
+          </div>
+        );
+      }
+
+      // Корневое приложение
+      function App() {
+        const [activeTab, setActiveTab] = useState('wheel');
+        const [balance, setBalance] = useState(1000);
+
+        return (
+          <div id="root">
+            {activeTab === 'wheel' && <WheelScreen balance={balance} setBalance={setBalance} />}
+            {activeTab === 'inventory' && <InventoryScreen />}
+            {activeTab === 'profile' && <ProfileScreen balance={balance} setBalance={setBalance} />}
+
+            {/* Навигационная панель */}
+            <div className="nav-bar">
+              <button className={`nav-btn ${activeTab === 'wheel' ? 'active' : ''}`} onClick={() => setActiveTab('wheel')}>
+                <span style={{ fontSize: '20px' }}>🎡</span>
+                <span>Колесо</span>
+              </button>
+              <button className={`nav-btn ${activeTab === 'inventory' ? 'active' : ''}`} onClick={() => setActiveTab('inventory')}>
+                <span style={{ fontSize: '20px' }}>🎒</span>
+                <span>Инвентарь</span>
+              </button>
+              <button className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+                <span style={{ fontSize: '20px' }}>👤</span>
+                <span>Профиль</span>
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
